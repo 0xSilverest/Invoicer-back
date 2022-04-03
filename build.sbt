@@ -9,12 +9,17 @@ lazy val root = (project in file("."))
   .settings(BuildHelper.stdSettings)
   .settings(
     name := "Invoicer-Back",
+
     testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-    libraryDependencies ++= Seq(`zio-test`, `zio-test-sbt`, `zio-http`, `zio-http-test`),
+
+    libraryDependencies ++= Seq(
+      `zio-core`, `zio-test`, `zio-test-sbt`, `zio-http`, `zio-http-test`,
+      `circe-core`, `circe-generic`, `circe-parser`,
+      `h2-driver`, `quill-jdbc-zio`),
   )
   .settings(
     Docker / version          := version.value,
-    Compile / run / mainClass := Option("com.example.zhttpservice.ZhttpService"),
+    Compile / run / mainClass := Option("dev.silverest.invoicerback.Invoicerback"),
   )
 
 addCommandAlias("fmt", "scalafmt; Test / scalafmt; sFix;")

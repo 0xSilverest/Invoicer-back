@@ -10,3 +10,4 @@
 metals.sbt
 target/
 *.scala.semanticdb
+null/

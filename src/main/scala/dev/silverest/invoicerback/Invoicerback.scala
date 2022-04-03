@@ -1,15 +1,34 @@
 package dev.silverest.invoicerback
 
-import zhttp.http._
+import zhttp.http.*
 import zhttp.service.Server
 import zio._
 
-object Invoicerback extends App {
-  val app: HttpApp[Any, Nothing] = Http.collect[Request] {
-    case Method.GET -> _ / "text" => Response.text("Hello World!")
-    case Method.GET -> _ / "json" => Response.json("""{"greetings": "Hello World!"}""")
-  }
+import dev.silverest.invoicerback.Router
+import scala.util.Try
+import zhttp.service.server.ServerChannelFactory
+import zhttp.service.EventLoopGroup
+
+object Invoicerback extends zio.App:
+  private val PORT = 8090
+
+  private val server =
+    Server.port(PORT) ++ 
+      Server.app(Router.routes)
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
-    Server.start(8090, app).exitCode
-}
+    val nThreads: Int = args.headOption.flatMap(x => Try(x.toInt).toOption).getOrElse(0)
+
+    val env = ServerChannelFactory.auto ++
+      EventLoopGroup.auto(nThreads) ++
+      Router.backendLayers
+
+    server
+      .make
+      .use(_ =>
+        console.putStrLn(s"Server started on port $PORT")
+          *> ZIO.never,
+      )
+      .provideCustomLayer(env)
+      .exitCode 
+
