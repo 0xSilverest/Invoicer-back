@@ -2,18 +2,15 @@ package dev.silverest.invoicerback.repositories
 
 import dev.silverest.invoicerback.models.Client.Company
 
-import java.sql.SQLException
-import H2Context.lift
-
-import io.getquill.util.LoadConfig
-import io.getquill.context.qzio._
-import io.getquill._
-import zio._
-
 import java.io.Closeable
 import javax.sql.DataSource
 
 import io.getquill.context.ZioJdbc._
+import io.getquill.util.LoadConfig
+import io.getquill.context.qzio._
+import io.getquill._
+
+import zio._
 
 object CompanyRepository:
   
@@ -22,58 +19,83 @@ object CompanyRepository:
   val impDs: DataSource with Closeable = JdbcContextConfig(LoadConfig("ctx")).dataSource
   implicit val env: Implicit[Has[DataSource]] = Implicit(Has(impDs))
 
-  inline def companies = quote {querySchema[Company]("Company")}
-
-  trait Service {
+  trait Service:
     def insert(company: Company): Task[Long]
-    def getAll: Task[List[Company]]
+    def update(company: Company): Task[Long]
+    def delete(id: String): Task[Long]
+    def all: Task[List[Company]]
     def byName(name: String): Task[List[Company]]
     def byId(id: String): Task[Option[Company]]
-  }
 
-  type CompanyRepositoryEnv = Has[CompanyRepository.Service]
+  type Env = Has[Service]
 
-  val live: ZLayer[ZEnv, Nothing, CompanyRepositoryEnv] = ZLayer.succeed {
+  inline def companies = quote { querySchema[Company]("Company") }
+
+  val live: ZLayer[ZEnv, Nothing, Env] = ZLayer.succeed {
     import H2Context._
     new Service:
-      override def insert(company: Company): Task[Long] = {
+      override def insert(company: Company) =
         inline def insertQuery = quote { companies.insertValue(lift(company)) }
         for {
-          i <- run(insertQuery).implicitDS
-        } yield i
-      }
+          id <- run(insertQuery).implicitDS
+        } yield id
 
-      override def getAll: Task[List[Company]] = for {
+      override def all = for {
         cs <- run(companies).implicitDS
       } yield cs
 
-      override def byName(name: String): Task[List[Company]] = {
-        inline def filterQuery = quote {
-          query[Company].filter(c => c.name == lift(name))
+      override def byName(name: String) =
+        inline def byNameQuery = quote {
+          companies.filter(c => c.name == lift(name))
         }
         for {
-          cs <- run(filterQuery).implicitDS
+          cs <- run(byNameQuery).implicitDS
         } yield cs
-      }
 
-      override def byId(id: String): Task[Option[Company]] = {
-        inline def filterQuery = quote {
-          query[Company].filter(c => c.id == lift(id))
+      override def byId(id: String) =
+        inline def byIdQuery = quote {
+          companies.filter(c => c.id == lift(id))
         }
         for {
-          cs <- run(filterQuery).implicitDS
+          cs <- run(byIdQuery).implicitDS
         } yield cs.headOption
-      }
+
+      override def delete(id: String) =
+        inline def deleteQuery() = quote {
+          companies
+            .filter(_.id == lift(id))
+            .delete
+        }
+        for {
+          id <- run(deleteQuery()).implicitDS
+        } yield id
+
+      override def update(company: Company) =
+        inline def updateQuery() =
+          quote {
+            companies
+              .filter(_.id == lift(company.id))
+              .updateValue(lift(company))
+          }
+        for {
+          id <- run(updateQuery()).implicitDS
+        } yield id
   }
- 
-  def insert(company: Company): ZIO[CompanyRepositoryEnv, Throwable, Long] =
+
+  def insert(company: Company): ZIO[Env, Throwable, Long] =
     ZIO.accessM(_.get.insert(company))
 
-  def getAll: ZIO[CompanyRepositoryEnv,Throwable,List[Company]] =
-    ZIO.accessM(_.get.getAll)
+  def getAll: ZIO[Env,Throwable,List[Company]] =
+    ZIO.accessM(_.get.all)
 
-  def getByName(name: String): ZIO[CompanyRepositoryEnv,Throwable,List[Company]] =
+  def findByName(name: String): ZIO[Env,Throwable,List[Company]] =
     ZIO.accessM(_.get.byName(name))
-  
-  def getById(id: String): ZIO[CompanyRepositoryEnv,Throwable,Option[Company]] =
+
+  def findById(id: String): ZIO[Env,Throwable,Option[Company]] =
     ZIO.accessM(_.get.byId(id))
+
+  def delete(id: String): ZIO[Env,Throwable,Long] =
+    ZIO.accessM(_.get.delete(id))
+
+  def update(company: Company): ZIO[Env,Throwable,Long] =
+    ZIO.accessM(_.get.update(company))

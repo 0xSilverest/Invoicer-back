@@ -1,14 +1,18 @@
 package dev.silverest.invoicerback.models
 
+import io.circe.Decoder
+import io.getquill.MappedEncoding
+import io.circe.Encoder
+
 type Percent = Double
 
 case class Address (street: String, city: String, zip: String)
 
-case class PhoneNumber (phoneNumber: String, countryCode: String)
+sealed abstract case class PhoneNumber private (phoneNumber: String)
 
 sealed abstract case class Email private (email: String)
 
-case class ICENum(iceNumber: String)
+sealed abstract case class ICENumber private (iceNumber: String)
 
 object Address:
     def empty: Address =
@@ -19,23 +23,71 @@ object Address:
         )
 
 
-object ICENum:
-    def empty: ICENum =
-        ICENum(
-          iceNumber = ""
-        )
+object ICENumber:
+  def empty: ICENumber = new ICENumber ("") {}
+
+  def fromString (iceNumber: String): Either[String, ICENumber] =
+    if iceNumber.matches("[0-9]{15}") then
+      Right(new ICENumber(iceNumber) {})
+    else
+      Left("ICE number must be 15 characters long")
+
+  given circeICENumberEncoder: Encoder[ICENumber] =
+    Encoder.encodeString.contramap[ICENumber](_.iceNumber)
+
+  given circeICENumberDecoder: Decoder[ICENumber] =
+    Decoder.decodeString.emap[ICENumber](ICENumber.fromString)
+
+  given quillICENumberEncoder: MappedEncoding[ICENumber, String] =
+    MappedEncoding[ICENumber, String](_.toString)
+
+  given quillICENumberDecoder: MappedEncoding[String, ICENumber] =
+    MappedEncoding[String, ICENumber](
+      ICENumber.fromString(_)
+        .getOrElse(ICENumber.empty))
 
 
 object PhoneNumber:
-    def empty: PhoneNumber =
-        PhoneNumber(
-          phoneNumber = "",
-          countryCode = ""
-        )
+  def empty: PhoneNumber =
+    new PhoneNumber("") {}
+
+  def fromString (phoneNumber: String): Either[String, PhoneNumber] =
+    if phoneNumber.matches("0(6|7)[0-9]{8}") then
+      Right(new PhoneNumber(phoneNumber) {})
+    else
+      Left("Phone number must be 10 numbers starting with 06 or 07")
+
+  given circePhoneNumberEncoder: Encoder[PhoneNumber] =
+    Encoder.encodeString.contramap[PhoneNumber](_.phoneNumber)
+
+  given circePhoneNumberDecoder: Decoder[PhoneNumber] =
+    Decoder.decodeString.emap[PhoneNumber](PhoneNumber.fromString)
+
+  given quillPhoneNumberEncoder: MappedEncoding[PhoneNumber, String] =
+    MappedEncoding[PhoneNumber, String](_.toString)
+
+  given quillPhoneNumberDecoder: MappedEncoding[String, PhoneNumber] =
+    MappedEncoding[String, PhoneNumber](
+      PhoneNumber.fromString(_)
+        .getOrElse(PhoneNumber.empty))
+
 
 object Email:
+  def empty: Email = new Email("") {}
 
-  def fromString (email: String): Option[Email] =
+  def fromString (email: String): Either[String, Email] =
     if email.matches("(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$)") then
-      Some(new Email(email) {})
-    else None
+      Right(new Email(email) {})
+    else Left(s"Email $email is not valid")
+
+  given circeEmailEncoder: Encoder[Email] =
+    Encoder.encodeString.contramap[Email](_.email)
+
+  given circeEmailDecoder: Decoder[Email] = 
+    Decoder.decodeString.emap[Email](Email.fromString)
+
+  given quillEmailEncoder: MappedEncoding[Email, String] =
+     MappedEncoding[Email, String](_.toString)
+
+  given quillEmailDecoder: MappedEncoding[String, Email] = 
+    MappedEncoding[String, Email](Email.fromString(_).getOrElse(Email.empty))
