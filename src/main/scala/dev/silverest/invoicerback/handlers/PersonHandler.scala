@@ -3,6 +3,7 @@ package dev.silverest.invoicerback.handlers
 import dev.silverest.invoicerback.models.Person
 import dev.silverest.invoicerback.models.Client.Person
 import dev.silverest.invoicerback.repositories.PersonRepository
+import dev.silverest.invoicerback.handlers.utils.HandlerUtils
 
 import zhttp.http._
 import zio._
@@ -33,23 +34,13 @@ class PersonHandler:
         } yield Response.json(person.asJson.toString)
 
       case request @ Method.POST -> _ / "person" / "add" =>
-        for {
-          eitherPerson <- request.bodyAsString.map(decode[Person])
-          insP <- eitherPerson match
-            case Right(p) => PersonRepository.insert(p)
-            case Left(_) => ZIO.fail(new Exception("Invalid Person"))
-        } yield Response.json(insP.asJson.toString)
+        HandlerUtils.successActionRequest(PersonRepository.insert)(request)
 
       case Method.DELETE -> _ / "person" / id =>
         for {
           _ <- PersonRepository.delete(id)
-        } yield Response.text(s"Deleted $id")
+        } yield Response.text(s"$id deleted")
 
       case request @ Method.PUT -> _ / "person" / "update" =>
-        for {
-          eitherPerson <- request.bodyAsString.map(decode[Person])
-          insP <- eitherPerson match
-            case Right(p) => PersonRepository.update(p)
-            case Left(_) => ZIO.fail(new Exception("Invalid Person"))
-        } yield Response.json(insP.asJson.toString)
+        HandlerUtils.successActionRequest(PersonRepository.update)(request)
     }

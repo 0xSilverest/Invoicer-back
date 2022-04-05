@@ -1,16 +1,17 @@
 package dev.silverest.invoicerback.handlers
 
-import zhttp.http._
-import zio._
+import zhttp.http.*
+import zio.*
+import io.circe.*
+import io.circe.syntax.*
+import io.circe.parser.*
+import io.circe.generic.auto.*
 
-import io.circe._
-import io.circe.syntax._
-import io.circe.parser._
-import io.circe.generic.auto._
-
+import dev.silverest.invoicerback.handlers.utils.HandlerUtils
 import dev.silverest.invoicerback.models.Company
 import dev.silverest.invoicerback.models.Client.Company
 import dev.silverest.invoicerback.repositories.CompanyRepository
+
 import javax.sql.DataSource
 import java.util.UUID
 
@@ -35,24 +36,13 @@ class CompanyHandler:
         } yield Response.json(company.asJson.toString)
         
       case request @ Method.POST -> _ / "company" / "add" =>
-          for {
-            eitherCompany <- request.bodyAsString.map(decode[Company])
-            insComp <- eitherCompany match
-                case Right(c) => CompanyRepository.insert(c)
-                case Left(_) => ZIO.fail(new Exception("Invalid company"))
-          } yield Response.json(insComp.asJson.toString)
+        HandlerUtils.successActionRequest(CompanyRepository.insert)(request)
 
       case Method.DELETE -> _ / "company" / "delete" / id =>
         for {
           _ <- CompanyRepository.delete(id)
-        } yield Response.text("Deleted successfully")
-        
+        } yield Response.text(s"$id deleted")
+
       case request @ Method.PUT -> _ / "company" / "update" =>
-        for {
-          eitherCompany <- request.bodyAsString.map(decode[Company])
-          updComp <- eitherCompany match {
-              case Right(c) => CompanyRepository.update(c)
-              case Left(e) => ZIO.fail(e)
-            }
-        } yield Response.json(updComp.asJson.toString)
+        HandlerUtils.successActionRequest(CompanyRepository.update)(request)
     }
