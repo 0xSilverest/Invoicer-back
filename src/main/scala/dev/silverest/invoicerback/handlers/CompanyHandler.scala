@@ -26,15 +26,11 @@ class CompanyHandler:
         } yield Response.json(companies.asJson.toString)
 
       case Method.GET -> _ / "company" / id =>
-        for {
-          company <- CompanyRepository.findById(id)
-        } yield Response.json(company.asJson.toString)
+        HandlerUtils.genericGetRequest(CompanyRepository.findById)(id)
 
-      case Method.GET -> _ / "company" / name =>
-        for {
-          company <- CompanyRepository.findByName(name)
-        } yield Response.json(company.asJson.toString)
-        
+      case Method.GET -> _ / "company" / "name" / name =>
+        HandlerUtils.genericGetRequest(CompanyRepository.findByName)(name)
+
       case request @ Method.POST -> _ / "company" / "add" =>
         HandlerUtils.successActionRequest(CompanyRepository.insert)(request)
 

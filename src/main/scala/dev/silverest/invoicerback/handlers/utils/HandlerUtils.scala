@@ -24,3 +24,10 @@ object HandlerUtils:
       eitherCompany <- request.bodyAsString.map(decode[A])
       res <- HandlerUtils.handleEither[Long, A, RepEnv](successAction)(eitherCompany)
     } yield Response.json(res.asJson.toString)
+
+  def genericGetRequest[A, RepEnv](getAction: String => ZIO[RepEnv, Throwable, A])
+                                  (key: String)
+                                  (using aEncoder: Encoder[A]): ZIO[RepEnv, Throwable, Response] =
+    for {
+      data <- getAction(key)
+    } yield Response.json(data.asJson.toString)

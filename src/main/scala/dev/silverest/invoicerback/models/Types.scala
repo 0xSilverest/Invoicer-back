@@ -8,11 +8,14 @@ type Percent = Double
 
 case class Address (street: String, city: String, zip: String)
 
-sealed abstract case class PhoneNumber private (phoneNumber: String)
+sealed abstract case class PhoneNumber private (phoneNumber: String):
+  override def toString: String = phoneNumber
 
-sealed abstract case class Email private (email: String)
+sealed abstract case class Email private (email: String):
+  override def toString: String = email
 
-sealed abstract case class ICENumber private (iceNumber: String)
+sealed abstract case class ICENumber private (iceNumber: String):
+  override def toString: String = iceNumber
 
 object Address:
     def empty: Address =
