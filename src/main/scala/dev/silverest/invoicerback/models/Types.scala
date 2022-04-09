@@ -29,8 +29,11 @@ object Address:
 object ICENumber:
   def empty: ICENumber = new ICENumber ("") {}
 
+  private inline def iceNumberRegex(iceNumber: String): Boolean =
+    iceNumber matches "[0-9]{15}"
+
   def fromString (iceNumber: String): Either[String, ICENumber] =
-    if iceNumber.matches("[0-9]{15}") then
+    if iceNumberRegex(iceNumber) then
       Right(new ICENumber(iceNumber) {})
     else
       Left("ICE number must be 15 characters long")
@@ -54,8 +57,11 @@ object PhoneNumber:
   def empty: PhoneNumber =
     new PhoneNumber("") {}
 
+  private inline def phoneNumberRegex(phoneNumber: String): Boolean =
+    phoneNumber matches "0(6|7)[0-9]{8}"
+
   def fromString (phoneNumber: String): Either[String, PhoneNumber] =
-    if phoneNumber.matches("0(6|7)[0-9]{8}") then
+    if phoneNumberRegex(phoneNumber)  then
       Right(new PhoneNumber(phoneNumber) {})
     else
       Left("Phone number must be 10 numbers starting with 06 or 07")
@@ -78,8 +84,11 @@ object PhoneNumber:
 object Email:
   def empty: Email = new Email("") {}
 
+  private inline def emailRegex(email: String): Boolean =
+    email matches "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$)"
+
   def fromString (email: String): Either[String, Email] =
-    if email.matches("(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$)") then
+    if emailRegex(email) then
       Right(new Email(email) {})
     else Left(s"Email $email is not valid")
 

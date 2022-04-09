@@ -6,11 +6,11 @@ import io.circe.*
 import io.circe.syntax.*
 import io.circe.parser.*
 import io.circe.generic.auto.*
-
 import dev.silverest.invoicerback.handlers.utils.HandlerUtils
 import dev.silverest.invoicerback.models.Company
 import dev.silverest.invoicerback.models.Client.Company
 import dev.silverest.invoicerback.repositories.CompanyRepository
+import pdi.jwt.JwtClaim
 
 import javax.sql.DataSource
 import java.util.UUID
@@ -18,11 +18,12 @@ import java.util.UUID
 class CompanyHandler:
   val backendLayer: ZLayer[ZEnv, Nothing, CompanyRepository.Env] = CompanyRepository.live
 
-  val endpoints =
+  def endpoints (claim: JwtClaim) =
     Http.collectZIO[Request] {
       case Method.GET -> _ / "companies" =>
+        // TODO: Implement JWT decoding to get userId or username
         for {
-          companies <- CompanyRepository.getAll
+          companies <- CompanyRepository.getAll("placeHolderId")
         } yield Response.json(companies.asJson.toString)
 
       case Method.GET -> _ / "company" / id =>

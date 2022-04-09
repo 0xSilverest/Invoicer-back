@@ -4,23 +4,23 @@ import dev.silverest.invoicerback.models.Person
 import dev.silverest.invoicerback.models.Client.Person
 import dev.silverest.invoicerback.repositories.PersonRepository
 import dev.silverest.invoicerback.handlers.utils.HandlerUtils
-
-import zhttp.http._
-import zio._
-
-import io.circe._
-import io.circe.syntax._
-import io.circe.parser._
-import io.circe.generic.auto._
+import zhttp.http.*
+import zio.*
+import io.circe.*
+import io.circe.syntax.*
+import io.circe.parser.*
+import io.circe.generic.auto.*
+import pdi.jwt.JwtClaim
 
 class PersonHandler:
   val backendLayer: ZLayer[ZEnv, Nothing, PersonRepository.Env] = PersonRepository.live
 
-  val endpoints =
+  def endpoints (claim: JwtClaim) =
     Http.collectZIO[Request] {
       case Method.GET -> _ / "persons" =>
+        // TODO: Add JWT decoding to get the user Id
         for {
-          persons <- PersonRepository.getAll
+          persons <- PersonRepository.getAll("placeHolderId")
         } yield Response.json(persons.asJson.toString)
     
       case Method.GET -> _ / "person" / id =>

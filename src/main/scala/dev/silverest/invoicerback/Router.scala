@@ -8,16 +8,27 @@ import zio.blocking.Blocking
 
 import java.io.IOException
 import java.time.LocalDateTime
-import zhttp.http._
+import zhttp.http.*
+import zio.*
 import zhttp.service.server.ServerChannelFactory
 import zhttp.service.{EventLoopGroup, Server}
-import zio._
 
 import scala.util.Try
 
 object Router:
-    private val companyHandler = new CompanyHandler
-    private val personHandler = new PersonHandler
+  private val companyHandler = new CompanyHandler
+  private val personHandler = new PersonHandler
+  private val userHandler = new UserHandler
+  private val authenticationHandler = new AuthenticationHandler
 
-    val routes = companyHandler.endpoints ++ personHandler.endpoints
-    val backendLayers = companyHandler.backendLayer ++ personHandler.backendLayer
+  val backendLayers = companyHandler.backendLayer ++ personHandler.backendLayer
+
+  private val publicRoutes = authenticationHandler.loginEndpoint ++ userHandler.publicEndpoints
+
+  // Those will require a blocking layer
+  // which will be the authentication
+  private val privateRoutes = authenticationHandler.authenticate(
+    HttpError.Forbidden("Not authorized"),
+    userHandler.privateEndpoints)
+
+  val routes = publicRoutes ++ privateRoutes

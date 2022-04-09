@@ -21,7 +21,7 @@ object PersonRepository:
     def insert(person: Person): Task[Long]
     def update(person: Person): Task[Long]
     def delete(id: String): Task[Long]
-    def all: Task[List[Person]]
+    def all(userId: String): Task[List[Person]]
     def byName(firstName: String, lastName: String): Task[List[Person]]
     def byId(id: String): Task[Option[Person]]
 
@@ -38,9 +38,10 @@ object PersonRepository:
           id <- run(insertQuery).implicitDS
         } yield id
 
-      override def all =
+      override def all(id: String) =
+        inline def allQuery = quote(persons.filter(_.userId == lift(id)))
         for {
-          ps <- run(persons).implicitDS
+          ps <- run(allQuery).implicitDS
         } yield ps
 
       override def byName(firstName: String, lastName: String) =
@@ -86,8 +87,8 @@ object PersonRepository:
   def insert(person: Person): ZIO[Env, Throwable, Long] =
     ZIO.accessM(_.get.insert(person))
 
-  def getAll: ZIO[Env, Throwable, List[Person]] =
-    ZIO.accessM(_.get.all)
+  def getAll(userId: String): ZIO[Env, Throwable, List[Person]] =
+    ZIO.accessM(_.get.all(userId))
 
   def findByName(firstName: String, lastName: String): ZIO[Env, Throwable, List[Person]] =
     ZIO.accessM(_.get.byName(firstName, lastName))

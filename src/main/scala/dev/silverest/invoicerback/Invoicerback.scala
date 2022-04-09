@@ -29,5 +29,4 @@ object Invoicerback extends zio.App:
           *> ZIO.never,
       )
       .provideCustomLayer(env)
-      .exitCode 
-
+      .exitCode

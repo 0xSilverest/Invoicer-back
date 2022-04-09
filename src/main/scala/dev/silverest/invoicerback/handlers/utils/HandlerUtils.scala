@@ -29,5 +29,5 @@ object HandlerUtils:
                                   (key: String)
                                   (using aEncoder: Encoder[A]): ZIO[RepEnv, Throwable, Response] =
     for {
-      data <- getAction(key)
-    } yield Response.json(data.asJson.toString)
+      _ <- getAction(key)
+    } yield Response.ok

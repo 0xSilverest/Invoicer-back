@@ -6,7 +6,12 @@ object BuildHelper {
   val ScalaVersion = "3.1.1"
 
   def commonSettings(scalaVersion: String) = CrossVersion.partialVersion(scalaVersion) match {
-    case Some((3, _))                  => Seq("-Xmax-inlines", "50","-language:postfixOps")
+    case Some((3, _))                  =>
+      Seq(
+        "-deprecation",
+        "-Xmax-inlines", "50",
+        "-language:postfixOps",
+        "-explain")
     case Some((2, 12)) | Some((2, 13)) => Seq("-Ywarn-unused:params")
     case _                             => Seq.empty
   }

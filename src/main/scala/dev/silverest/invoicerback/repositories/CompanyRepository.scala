@@ -23,7 +23,7 @@ object CompanyRepository:
     def insert(company: Company): Task[Long]
     def update(company: Company): Task[Long]
     def delete(id: String): Task[Long]
-    def all: Task[List[Company]]
+    def all(userId: String): Task[List[Company]]
     def byName(name: String): Task[List[Company]]
     def byId(id: String): Task[Option[Company]]
 
@@ -40,9 +40,11 @@ object CompanyRepository:
           id <- run(insertQuery).implicitDS
         } yield id
 
-      override def all = for {
-        cs <- run(companies).implicitDS
-      } yield cs
+      override def all(userId: String) = 
+        inline def allQuery = quote { companies.filter(c => c.userId == lift(userId)) }  
+        for {
+          cs <- run(companies).implicitDS
+        } yield cs
 
       override def byName(name: String) =
         inline def byNameQuery = quote {
@@ -85,17 +87,17 @@ object CompanyRepository:
   def insert(company: Company): ZIO[Env, Throwable, Long] =
     ZIO.accessM(_.get.insert(company))
 
-  def getAll: ZIO[Env,Throwable,List[Company]] =
-    ZIO.accessM(_.get.all)
+  def getAll(userId: String): ZIO[Env, Throwable, List[Company]] =
+    ZIO.accessM(_.get.all(userId))
 
-  def findByName(name: String): ZIO[Env,Throwable,List[Company]] =
+  def findByName(name: String): ZIO[Env, Throwable, List[Company]] =
     ZIO.accessM(_.get.byName(name))
 
-  def findById(id: String): ZIO[Env,Throwable,Option[Company]] =
+  def findById(id: String): ZIO[Env, Throwable, Option[Company]] =
     ZIO.accessM(_.get.byId(id))
 
-  def delete(id: String): ZIO[Env,Throwable,Long] =
+  def delete(id: String): ZIO[Env, Throwable, Long] =
     ZIO.accessM(_.get.delete(id))
 
-  def update(company: Company): ZIO[Env,Throwable,Long] =
+  def update(company: Company): ZIO[Env, Throwable, Long] =
     ZIO.accessM(_.get.update(company))
