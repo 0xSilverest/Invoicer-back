@@ -29,7 +29,6 @@ object Router:
   private val publicRoutes =
     authenticationHandler.loginEndpoint
     ++ userHandler.publicEndpoints
-    ++ companyHandler.endpoints
 
   private def authenticationLayer[R, E] =
     authenticationHandler.authenticate[R, E](Http.forbidden("Not authorized"))
@@ -40,6 +39,6 @@ object Router:
   private val privateRoutes =
     authenticationLayer(userHandler.privateEndpoints)
     ++ authenticationLayer(personHandler.endpoints)
-    //++ authenticationLayer(companyHandler.endpoints)
+    ++ authenticationLayer(companyHandler.endpoints)
 
-  val routes = publicRoutes //++ privateRoutes
+  val routes = publicRoutes ++ privateRoutes

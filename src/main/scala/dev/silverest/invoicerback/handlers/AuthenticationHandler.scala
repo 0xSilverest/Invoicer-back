@@ -20,15 +20,9 @@ class AuthenticationHandler:
   // to check authentication
   def authenticate[R, E](fail: HttpApp[R, E])(success: JwtClaim => HttpApp[R, E]): HttpApp[R, E] =
     Http.fromFunction[Request] {
-      _.headers
-        .toList
-        .filter(_._1 == "Authorization")
-        .map(header => {
-          val maybeClaim: Option[JwtClaim] = authenticator.jwtDecode(header._2)
-          maybeClaim match
-            case Some(claim) => success(claim)
-            case None => fail
-        }).head
+      _.bearerToken
+        .flatMap(token => authenticator.jwtDecode(token))
+        .fold[HttpApp[R, E]](fail)(success)
     }.flatten
 
   val loginEndpoint =
