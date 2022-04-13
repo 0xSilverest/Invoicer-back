@@ -32,7 +32,7 @@ object CompanyRepository:
   inline def companies = quote { querySchema[Company]("Company") }
 
   val live: ZLayer[ZEnv, Nothing, Env] = ZLayer.succeed {
-    import H2Context._
+    import PostgresContext._
     new Service:
       override def insert(company: Company) =
         inline def insertQuery = quote { companies.insertValue(lift(company)) }

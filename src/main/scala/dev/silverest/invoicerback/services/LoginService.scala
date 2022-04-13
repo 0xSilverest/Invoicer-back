@@ -7,26 +7,24 @@ import io.circe.syntax.*
 import io.circe.parser.*
 import io.circe.generic.auto.*
 
-import dev.silverest.invoicerback.repositories.UserRepository
+import dev.silverest.invoicerback.repositories.UserAuthRepository
 
 class LoginService:
-  private val backendLayer: ZLayer[ZEnv, Nothing, UserRepository.Env] = UserRepository.live
+  private val backendLayer: ZLayer[ZEnv, Nothing, UserAuthRepository.Env] = UserAuthRepository.live
 
-  private val authenticator = Authenticator
+  private val authenticator = Authenticator()
 
-  def login(username: String, password: String): Either[String, String] =
-    for {
-      mUser <- UserRepository.findByUsername(username)
-      eLoggedUser <-
-        mUser match
-          case Some(user) =>
-            if user.password == password then
-              Right(authenticator.jwtEncode(user.username))
-            else
-              Left("Invalid password")
-          case None =>
-            Left("User not found")
-    } yield eLoggedUser
+  def login(username: String, password: String) =
+    UserAuthRepository.findByUsername(username)
+      .map {
+        case Some(user) =>
+          if user.password == password then
+            Response.json(s"${authenticator.jwtEncode(user.username).asJson}")
+          else
+            Response.fromHttpError(HttpError.BadRequest("Invalid password."))
+        case None =>
+          Response.fromHttpError(HttpError.BadRequest("User not found."))
+      }
 
 
 object LoginService:

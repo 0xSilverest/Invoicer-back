@@ -10,8 +10,7 @@ object BuildHelper {
       Seq(
         "-deprecation",
         "-Xmax-inlines", "50",
-        "-language:postfixOps",
-        "-explain")
+        "-language:postfixOps")
     case Some((2, 12)) | Some((2, 13)) => Seq("-Ywarn-unused:params")
     case _                             => Seq.empty
   }

@@ -17,8 +17,7 @@ lazy val root = (project in file("."))
       `zio-test`, `zio-test-sbt`,
       `zio-http`, `zio-http-test`,
       `circe-core`, `circe-generic`, `circe-parser`,
-      `h2-driver`,
-      `quill-jdbc-zio`,
+      `postgres-driver`, `quill-jdbc-zio`,
       `jwt-core`,
       `tapir-core`, `tapir-zio`, `tapir-zio-http`)
   )

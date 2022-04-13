@@ -21,14 +21,25 @@ object Router:
   private val userHandler = new UserHandler
   private val authenticationHandler = new AuthenticationHandler
 
-  val backendLayers = companyHandler.backendLayer ++ personHandler.backendLayer
+  val backendLayers =
+    companyHandler.backendLayer
+    ++ personHandler.backendLayer
+    ++ userHandler.backendLayer
 
-  private val publicRoutes = authenticationHandler.loginEndpoint ++ userHandler.publicEndpoints
+  private val publicRoutes =
+    authenticationHandler.loginEndpoint
+    ++ userHandler.publicEndpoints
+    ++ companyHandler.endpoints
+
+  private def authenticationLayer[R, E] =
+    authenticationHandler.authenticate[R, E](Http.forbidden("Not authorized"))
+
 
   // Those will require a blocking layer
   // which will be the authentication
-  private val privateRoutes = authenticationHandler.authenticate(
-    HttpError.Forbidden("Not authorized"),
-    userHandler.privateEndpoints)
+  private val privateRoutes =
+    authenticationLayer(userHandler.privateEndpoints)
+    ++ authenticationLayer(personHandler.endpoints)
+    //++ authenticationLayer(companyHandler.endpoints)
 
-  val routes = publicRoutes ++ privateRoutes
+  val routes = publicRoutes //++ privateRoutes

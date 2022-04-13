@@ -31,7 +31,7 @@ object ProductRepository:
   inline def products = quote { querySchema[Product]("Product") }
 
   val live: ZLayer[ZEnv, Nothing, Env] = ZLayer.succeed {
-    import H2Context._
+    import PostgresContext._
     new Service:
       override def insert(product: Product) =
         inline def insertQuery = quote(products.insertValue(lift(product)))

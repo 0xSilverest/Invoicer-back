@@ -9,6 +9,7 @@ object Dependencies {
   val zioVersion   = "1.0.13"
   val tapirVersion = "1.0.0-M6"
   val zioLoggingVersion = "0.5.14"
+  val postgresVersion  = "42.2.8"
 
   val `zio-core`    = "dev.zio" %% "zio" % zioVersion
   val `zio-logging` = "dev.zio" %% "zio-logging" % zioLoggingVersion
@@ -24,8 +25,9 @@ object Dependencies {
   val `circe-parser`  = "io.circe" %% "circe-parser" % circeVersion
 
   val `quill-jdbc-zio` = "io.getquill" %% "quill-jdbc-zio" % quillVersion
-  val `mysql-driver`   = "mysql" % "mysql-connector-java" % mysqlVersion
-  val `h2-driver`      = "com.h2database" % "h2" % "2.1.210"
+  //val `mysql-driver`   = "mysql" % "mysql-connector-java" % mysqlVersion
+  val `postgres-driver` = "org.postgresql" % "postgresql" % postgresVersion
+  //val `h2-driver`      = "com.h2database" % "h2" % "2.1.210"
 
   val `tapir-core`     = "com.softwaremill.sttp.tapir" %% "tapir-core" % tapirVersion
   val `tapir-zio`      = "com.softwaremill.sttp.tapir" %% "tapir-zio1" % tapirVersion

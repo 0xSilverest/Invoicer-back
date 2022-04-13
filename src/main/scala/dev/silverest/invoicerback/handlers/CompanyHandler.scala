@@ -18,12 +18,12 @@ import java.util.UUID
 class CompanyHandler:
   val backendLayer: ZLayer[ZEnv, Nothing, CompanyRepository.Env] = CompanyRepository.live
 
-  def endpoints (claim: JwtClaim) =
+  def endpoints =
     Http.collectZIO[Request] {
       case Method.GET -> _ / "companies" =>
         // TODO: Implement JWT decoding to get userId or username
         for {
-          companies <- CompanyRepository.getAll("placeHolderId")
+          companies <- CompanyRepository.getAll("1")
         } yield Response.json(companies.asJson.toString)
 
       case Method.GET -> _ / "company" / id =>

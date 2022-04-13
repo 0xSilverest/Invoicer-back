@@ -13,12 +13,12 @@ import io.circe.parser.*
 import io.circe.generic.auto.*
 
 class AuthenticationHandler:
-  private val authenticator = Authenticator
-  private val loginService = LoginService
+  private val authenticator = Authenticator()
+  private val loginService = LoginService()
 
   // This will act as a filter in front of all the requests
   // to check authentication
-  def authenticate[R, E](fail: HttpApp[R, E], success: JwtClaim => HttpApp[R, E]): HttpApp[R, E] =
+  def authenticate[R, E](fail: HttpApp[R, E])(success: JwtClaim => HttpApp[R, E]): HttpApp[R, E] =
     Http.fromFunction[Request] {
       _.headers
         .toList
@@ -33,13 +33,15 @@ class AuthenticationHandler:
 
   val loginEndpoint =
     Http.collectZIO[Request] {
-      case req @ Method.GET -> _ / "login" =>
+      case req @ Method.POST -> _ / "login" =>
         for {
-          eCreds <- req.bodyAsString.map(decode[LoginRequest])
-          response <- eCreds match
-            case Right(creds) => loginService.login(creds.username, creds.password)
-            case Left(error) => ZIO.fail(error)
-        } yield Response.json(response.asJson)
+          response <- req.bodyAsString
+            .map(decode[LoginRequest])
+            .flatMap {
+              case Right(creds) => loginService.login(creds.username, creds.password)
+              case Left(error) => ZIO.succeed(Response.fromHttpError(HttpError.UnprocessableEntity(s"$error")))
+            }
+        } yield response
     }
 
   case class LoginRequest(username: String, password: String)

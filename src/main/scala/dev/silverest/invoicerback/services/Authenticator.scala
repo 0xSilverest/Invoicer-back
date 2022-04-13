@@ -23,4 +23,4 @@ class Authenticator:
     Jwt.decode(token, SECRET_KEY, Seq(JwtAlgorithm.HS512)).toOption
 
 object Authenticator:
-  def apply() = new Authenticator()
+  def apply() = new Authenticator

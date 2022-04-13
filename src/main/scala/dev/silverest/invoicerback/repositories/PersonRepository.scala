@@ -30,7 +30,7 @@ object PersonRepository:
   inline def persons = quote { querySchema[Person]("Person") }
 
   val live: ZLayer[ZEnv, Nothing, Env] = ZLayer.succeed {
-    import H2Context._
+    import PostgresContext._
     new Service:
       override def insert(person: Person) =
         inline def insertQuery = quote(persons.insertValue(lift(person)))

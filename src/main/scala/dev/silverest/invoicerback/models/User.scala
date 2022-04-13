@@ -4,7 +4,7 @@ import io.circe.Decoder
 import io.getquill.MappedEncoding
 import io.circe.Encoder
 
-case class User (
+case class User(
     id: String,
     username: String,
     email: Email,
