@@ -1,5 +1,6 @@
 package dev.silverest.invoicerback.handlers.utils
 
+import dev.silverest.invoicerback.daos.Mapper
 import dev.silverest.invoicerback.repositories.CompanyRepository
 import zhttp.http.*
 import zio.*
@@ -21,7 +22,6 @@ object HandlerUtils:
         }
       case Left(e) => ZIO.succeed(Response.fromHttpError(HttpError.BadRequest(e.getMessage)))
 
-
   def successActionRequest[A, RepEnv](successAction: A => ZIO[RepEnv, Throwable, Long])
                              (request: Request)
                              (using aEncoder: Encoder[A])
@@ -29,6 +29,19 @@ object HandlerUtils:
     for {
       eitherCompany <- request.bodyAsString.map(decode[A])
       response <- handleEither[Long, A, RepEnv](successAction)(eitherCompany)
+    } yield response
+
+  def successActionRequest[ADao, A, RepEnv](successAction: A => ZIO[RepEnv, Throwable, Long])
+                             (request: Request, userId: String)
+                             (using aMapper: Mapper[ADao, A])
+                             (using aEncoder: Encoder[A])
+                             (using aDecoder: Decoder[ADao]): ZIO[RepEnv, Throwable, Response] =
+    for {
+      eitherA <- request.bodyAsString.map(decode[ADao]).map {
+                case Right(aDao) => Right(aDao.mapToModel(userId))
+                case Left(e) => Left(e)
+              }
+      response <- handleEither[Long, A, RepEnv](successAction)(eitherA)
     } yield response
 
   def genericGetRequest[A, RepEnv](getAction: String => ZIO[RepEnv, Throwable, A])

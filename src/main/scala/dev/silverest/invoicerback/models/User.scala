@@ -5,17 +5,20 @@ import io.getquill.MappedEncoding
 import io.circe.Encoder
 
 case class User(
-    id: String,
-    username: String,
-    email: Email,
-    password: String,
-    role: Role,
-    firstName: String,
-    lastName: String)
+  username: String,
+  email: Email,
+  password: String,
+  role: Role,
+  firstName: String,
+  lastName: String)
 
 enum Role:
   case Admin
   case User
+
+case class UserJwtDecode(
+  username: String
+)
 
 object Role:
   def fromString (role: String): Either[String, Role] =

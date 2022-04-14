@@ -1,6 +1,7 @@
 package dev.silverest.invoicerback.handlers
 
 import dev.silverest.invoicerback.services.{Authenticator, LoginService}
+import dev.silverest.invoicerback.models.UserJwtDecode
 
 import pdi.jwt.JwtClaim
 
@@ -18,11 +19,11 @@ class AuthenticationHandler:
 
   // This will act as a filter in front of all the requests
   // to check authentication
-  def authenticate[R, E](fail: HttpApp[R, E])(success: JwtClaim => HttpApp[R, E]): HttpApp[R, E] =
+  def authenticate[R, E](fail: HttpApp[R, E])(success: Either[Error, UserJwtDecode] => HttpApp[R, E]): HttpApp[R, E] =
     Http.fromFunction[Request] {
       _.bearerToken
         .flatMap(token => authenticator.jwtDecode(token))
-        .fold[HttpApp[R, E]](fail)(success)
+        .fold[HttpApp[R, E]](fail)(claim => success(decode[UserJwtDecode](claim.toJson)))
     }.flatten
 
   val loginEndpoint =

@@ -2,6 +2,7 @@ package dev.silverest.invoicerback.handlers
 
 import dev.silverest.invoicerback.models.Person
 import dev.silverest.invoicerback.models.Client.Person
+import dev.silverest.invoicerback.models.UserJwtDecode
 import dev.silverest.invoicerback.repositories.PersonRepository
 import dev.silverest.invoicerback.handlers.utils.HandlerUtils
 import zhttp.http.*
@@ -15,7 +16,7 @@ import pdi.jwt.JwtClaim
 class PersonHandler:
   val backendLayer: ZLayer[ZEnv, Nothing, PersonRepository.Env] = PersonRepository.live
 
-  def endpoints (claim: JwtClaim) =
+  def endpoints (userDecoded: UserJwtDecode) =
     Http.collectZIO[Request] {
       case Method.GET -> _ / "persons" =>
         // TODO: Add JWT decoding to get the user Id

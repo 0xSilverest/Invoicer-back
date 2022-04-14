@@ -16,7 +16,7 @@ class Authenticator:
 
   def jwtEncode(username: String): String =
     val json = s"""{"username": "$username"}"""
-    val claim = JwtClaim(json).issuedNow.expiresIn(60)
+    val claim = JwtClaim(json).issuedNow.expiresIn(3600)
     Jwt.encode(claim, SECRET_KEY, JwtAlgorithm.HS512)
 
   def jwtDecode(token: String): Option[JwtClaim] =

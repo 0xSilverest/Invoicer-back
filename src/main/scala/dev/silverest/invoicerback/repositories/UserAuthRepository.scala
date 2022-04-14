@@ -13,7 +13,7 @@ import io.getquill._
 
 import zio._
 
-object UserAuthRepository:
+object UserRepository:
 
   import io.getquill.context.qzio.ImplicitSyntax._
 
@@ -24,7 +24,6 @@ object UserAuthRepository:
     def insert(user: User): Task[Long]
     def update(user: User): Task[Long]
     def delete(username: String): Task[Long]
-    def findById(Id: String): Task[Option[User]]
     def findByUsername(username: String): Task[Option[User]]
     def findByEmail(email: Email): Task[Option[User]]
     def all: Task[List[User]]
@@ -46,7 +45,7 @@ object UserAuthRepository:
         inline def updateQuery =
           quote {
             users
-              .filter(_.id == lift(user.id))
+              .filter(_.username == lift(user.username))
               .updateValue(lift(user))
           }
         for {
@@ -58,13 +57,6 @@ object UserAuthRepository:
         for {
           id <- run(deleteQuery).implicitDS
         } yield id
-
-      override def findById(id: String) =
-        inline def findByIdQuery =
-          quote { users.filter(_.id == lift(id)).take(1) }
-        for {
-          user <- run(findByIdQuery).implicitDS
-        } yield user.headOption
 
       override def findByUsername(username: String) =
         inline def findByUsernameQuery =
@@ -96,9 +88,6 @@ object UserAuthRepository:
 
   def delete(username: String): ZIO[Env, Throwable, Long] =
     ZIO.accessM(_.get.delete(username))
-
-  def findById(id: String): ZIO[Env, Throwable, Option[User]] =
-    ZIO.accessM(_.get.findById(id))
 
   def findByUsername(username: String): ZIO[Env, Throwable, Option[User]] =
     ZIO.accessM(_.get.findByUsername(username))

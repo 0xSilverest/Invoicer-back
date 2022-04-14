@@ -9,37 +9,40 @@ import io.circe.generic.auto.*
 import dev.silverest.invoicerback.handlers.utils.HandlerUtils
 import dev.silverest.invoicerback.models.Company
 import dev.silverest.invoicerback.models.Client.Company
+import dev.silverest.invoicerback.daos.CompanyDao
+import dev.silverest.invoicerback.models.UserJwtDecode
 import dev.silverest.invoicerback.repositories.CompanyRepository
+import dev.silverest.invoicerback.services.Authenticator
 import pdi.jwt.JwtClaim
 
 import javax.sql.DataSource
 import java.util.UUID
 
 class CompanyHandler:
-  val backendLayer: ZLayer[ZEnv, Nothing, CompanyRepository.Env] = CompanyRepository.live
+  private type Env = CompanyRepository.Env
 
-  def endpoints(jwt: JwtClaim) =
+  val backendLayer: ZLayer[ZEnv, Nothing, Env] = CompanyRepository.live
+
+  private val authenticator = Authenticator()
+
+  def endpoints(jwtDecoded: UserJwtDecode) =
     Http.collectZIO[Request] {
       case Method.GET -> _ / "companies" =>
-        // TODO: Implement JWT decoding to get userId or username
         for {
-          companies <- CompanyRepository.getAll("1")
+          companies <- CompanyRepository.getAll(jwtDecoded.username)
         } yield Response.json(companies.asJson.toString)
 
-      case Method.GET -> _ / "company" / id =>
-        HandlerUtils.genericGetRequest(CompanyRepository.findById)(id)
-
-      case Method.GET -> _ / "company" / "name" / name =>
-        HandlerUtils.genericGetRequest(CompanyRepository.findByName)(name)
+      case Method.GET -> _ / "company" / name =>
+        HandlerUtils.genericGetRequest(CompanyRepository.findByName(jwtDecoded.username))(name)
 
       case request @ Method.POST -> _ / "company" / "add" =>
-        HandlerUtils.successActionRequest(CompanyRepository.insert)(request)
+        HandlerUtils.successActionRequest[CompanyDao, Company, Env](CompanyRepository.insert)(request, jwtDecoded.username)
 
-      case Method.DELETE -> _ / "company" / "delete" / id =>
+      case Method.DELETE -> _ / "company" / "delete" / name =>
         for {
-          _ <- CompanyRepository.delete(id)
-        } yield Response.text(s"$id deleted")
+          _ <- CompanyRepository.delete(jwtDecoded.username)(name)
+        } yield Response.text("")
 
       case request @ Method.PUT -> _ / "company" / "update" =>
-        HandlerUtils.successActionRequest(CompanyRepository.update)(request)
+        HandlerUtils.successActionRequest[CompanyDao, Company, Env](CompanyRepository.update)(request, jwtDecoded.username)
     }

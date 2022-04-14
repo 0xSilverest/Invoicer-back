@@ -22,10 +22,9 @@ object CompanyRepository:
   trait Service:
     def insert(company: Company): Task[Long]
     def update(company: Company): Task[Long]
-    def delete(id: String): Task[Long]
+    def delete(name: String, userId: String): Task[Long]
     def all(userId: String): Task[List[Company]]
-    def byName(name: String): Task[List[Company]]
-    def byId(id: String): Task[Option[Company]]
+    def byName(name: String, userId: String): Task[List[Company]]
 
   type Env = Has[Service]
 
@@ -46,42 +45,37 @@ object CompanyRepository:
           cs <- run(companies).implicitDS
         } yield cs
 
-      override def byName(name: String) =
+      override def byName(name: String, userId: String) =
         inline def byNameQuery = quote {
-          companies.filter(c => c.name == lift(name))
+          companies
+            .filter(c => c.name == lift(name)
+                      && c.userId == lift(userId))
         }
         for {
           cs <- run(byNameQuery).implicitDS
         } yield cs
 
-      override def byId(id: String) =
-        inline def byIdQuery = quote {
-          companies.filter(c => c.id == lift(id))
-        }
-        for {
-          cs <- run(byIdQuery).implicitDS
-        } yield cs.headOption
-
-      override def delete(id: String) =
+      override def delete(name: String, userId: String) =
         inline def deleteQuery() = quote {
           companies
-            .filter(_.id == lift(id))
+            .filter(c => c.name == lift(name)
+                      && c.userId == lift(userId))
             .delete
         }
         for {
-          id <- run(deleteQuery()).implicitDS
-        } yield id
+          l <- run(deleteQuery()).implicitDS
+        } yield l
 
       override def update(company: Company) =
         inline def updateQuery() =
           quote {
             companies
-              .filter(_.id == lift(company.id))
+              .filter(_.name == lift(company.name))
               .updateValue(lift(company))
           }
         for {
-          id <- run(updateQuery()).implicitDS
-        } yield id
+          l <- run(updateQuery()).implicitDS
+        } yield l
   }
 
   def insert(company: Company): ZIO[Env, Throwable, Long] =
@@ -90,14 +84,11 @@ object CompanyRepository:
   def getAll(userId: String): ZIO[Env, Throwable, List[Company]] =
     ZIO.accessM(_.get.all(userId))
 
-  def findByName(name: String): ZIO[Env, Throwable, List[Company]] =
-    ZIO.accessM(_.get.byName(name))
+  def findByName(userId: String)(name: String): ZIO[Env, Throwable, List[Company]] =
+    ZIO.accessM(_.get.byName(name, userId))
 
-  def findById(id: String): ZIO[Env, Throwable, Option[Company]] =
-    ZIO.accessM(_.get.byId(id))
-
-  def delete(id: String): ZIO[Env, Throwable, Long] =
-    ZIO.accessM(_.get.delete(id))
+  def delete(userId: String)(name: String): ZIO[Env, Throwable, Long] =
+    ZIO.accessM(_.get.delete(name, userId))
 
   def update(company: Company): ZIO[Env, Throwable, Long] =
     ZIO.accessM(_.get.update(company))
