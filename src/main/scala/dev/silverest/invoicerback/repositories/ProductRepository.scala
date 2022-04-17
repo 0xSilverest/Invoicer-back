@@ -33,6 +33,8 @@ object ProductRepository:
   val live: ZLayer[ZEnv, Nothing, Env] = ZLayer.succeed {
     import PostgresContext._
     new Service:
+      implicit inline def productInsertMeta: InsertMeta[Product] = insertMeta[Product](_.id)
+
       override def insert(product: Product) =
         inline def insertQuery = quote(products.insertValue(lift(product)))
         for {

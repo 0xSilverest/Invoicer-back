@@ -10,6 +10,8 @@ import io.circe.generic.auto.*
 import dev.silverest.invoicerback.repositories.UserRepository
 
 class LoginService:
+  case class Token(token: String)
+  
   private val backendLayer: ZLayer[ZEnv, Nothing, UserRepository.Env] = UserRepository.live
 
   private val authenticator = Authenticator()
@@ -19,7 +21,7 @@ class LoginService:
       .map {
         case Some(user) =>
           if user.password == password then
-            Response.json(s"${authenticator.jwtEncode(user.username).asJson}")
+            Response.json(s"${Token(authenticator.jwtEncode(user.username)).asJson}")
           else
             Response.fromHttpError(HttpError.BadRequest("Invalid password."))
         case None =>

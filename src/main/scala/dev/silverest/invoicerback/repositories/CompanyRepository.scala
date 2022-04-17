@@ -1,6 +1,7 @@
 package dev.silverest.invoicerback.repositories
 
 import dev.silverest.invoicerback.models.Client.Company
+import dev.silverest.invoicerback.models.ICENumber
 
 import java.io.Closeable
 import javax.sql.DataSource
@@ -25,6 +26,8 @@ object CompanyRepository:
     def delete(name: String, userId: String): Task[Long]
     def all(userId: String): Task[List[Company]]
     def byName(name: String, userId: String): Task[List[Company]]
+    def containsId(id: Int, userId: String): Task[Boolean]
+    def containsNot(iceNumber: ICENumber, userId: String): Task[Boolean]
 
   type Env = Has[Service]
 
@@ -33,6 +36,8 @@ object CompanyRepository:
   val live: ZLayer[ZEnv, Nothing, Env] = ZLayer.succeed {
     import PostgresContext._
     new Service:
+      implicit inline def companyInsertMeta: InsertMeta[Company] = insertMeta[Company](_.id)
+
       override def insert(company: Company) =
         inline def insertQuery = quote { companies.insertValue(lift(company)) }
         for {
@@ -76,6 +81,28 @@ object CompanyRepository:
         for {
           l <- run(updateQuery()).implicitDS
         } yield l
+
+      override def containsNot(iceNumber: ICENumber, userId: String) =
+        inline def containsNotQuery() = quote {
+          companies
+            .filter(_.iceNumber == lift(iceNumber))
+            .filter(_.userId == lift(userId))
+            .isEmpty
+        }
+        for {
+          b <- run(containsNotQuery()).implicitDS
+        } yield b
+
+      override def containsId(id: Int, userId: String) =
+        inline def containsQuery() = quote {
+          companies
+            .filter(_.id == lift(id))
+            .filter(_.userId == lift(userId))
+            .nonEmpty
+        }
+        for {
+          b <- run(containsQuery()).implicitDS
+        } yield b
   }
 
   def insert(company: Company): ZIO[Env, Throwable, Long] =
@@ -92,3 +119,9 @@ object CompanyRepository:
 
   def update(company: Company): ZIO[Env, Throwable, Long] =
     ZIO.accessM(_.get.update(company))
+
+  def containsNot(iceNumber: ICENumber, userId: String): ZIO[Env, Throwable, Boolean] =
+    ZIO.accessM(_.get.containsNot(iceNumber, userId))
+
+  def containsId(id: Int, userId: String): ZIO[Env, Throwable, Boolean] = 
+    ZIO.accessM(_.get.containsId(id, userId))
