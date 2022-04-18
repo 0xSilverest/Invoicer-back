@@ -7,7 +7,7 @@ import io.circe.syntax.*
 import io.circe.parser.*
 import io.circe.generic.auto.*
 
-import dev.silverest.invoicerback.handlers.utils.HandlerUtils
+import dev.silverest.invoicerback.handlers.utils.*
 import dev.silverest.invoicerback.models.Company
 import dev.silverest.invoicerback.models.Client
 import dev.silverest.invoicerback.daos.CompanyDao
@@ -70,7 +70,7 @@ class CompanyHandler:
     nonExistenceChecker(request, userId)
       .flatMap {
         case p: Client.Company => HandlerUtils.successActionHandler(repositoryAction)(p)
-        case e: HttpError => ZIO.succeed(Response.fromHttpError(e))
+        case e: HttpError => ErrorHandler.handleError(e)
       }
 
   private def existenceChecker = 

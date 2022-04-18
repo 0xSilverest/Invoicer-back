@@ -2,6 +2,8 @@ package dev.silverest.invoicerback
 
 import handlers._
 import filters._
+import repositories._
+import models.UserJwtDecode
 
 import java.io.IOException
 import zhttp.http._
@@ -13,8 +15,7 @@ import zhttp.http.*
 import zio.*
 import zhttp.service.server.ServerChannelFactory
 import zhttp.service.{EventLoopGroup, Server}
-
-import scala.util.Try
+import dev.silverest.invoicerback.repositories.UserRepository
 
 object Router:
 
@@ -32,9 +33,9 @@ object Router:
 
   private val publicRoutes =
     authenticationHandler.loginEndpoint
-    ++ userHandler.publicEndpoints
+      ++ userHandler.publicEndpoints
 
-  private def filterLayer[R, E] =
+  private def filterLayer[R, E] = 
     authenticationFilter.authenticate[R, E](Http.forbidden("Not authorized"))
 
 

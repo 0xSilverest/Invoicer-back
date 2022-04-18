@@ -2,6 +2,7 @@ package dev.silverest.invoicerback.repositories
 
 import dev.silverest.invoicerback.models.User
 import dev.silverest.invoicerback.models.Email
+import dev.silverest.invoicerback.handlers.utils.ErrorHandler
 
 import java.io.Closeable
 import javax.sql.DataSource
@@ -10,6 +11,8 @@ import io.getquill.context.ZioJdbc._
 import io.getquill.util.LoadConfig
 import io.getquill.context.qzio._
 import io.getquill._
+
+import zhttp.http.*
 
 import zio._
 
@@ -27,6 +30,9 @@ object UserRepository:
     def findByUsername(username: String): Task[Option[User]]
     def findByEmail(email: Email): Task[Option[User]]
     def all: Task[List[User]]
+    def containsId(username: String): Task[Boolean]
+    def containsNotEmail(email: Email): Task[Boolean]
+    def containsNot(username: String): Task[Boolean]
 
   type Env = Has[Service]
 
@@ -39,7 +45,7 @@ object UserRepository:
         inline def insertQuery = quote { users.insertValue(lift(user)) }
         for {
           id <- run(insertQuery).implicitDS
-        } yield id
+        } yield 1
 
       override def update(user: User) =
         inline def updateQuery =
@@ -75,6 +81,36 @@ object UserRepository:
         for {
           users <- run(users).implicitDS
         } yield users
+
+      override def containsNot(username: String) =
+        inline def containsNotQuery() = quote {
+          users
+            .filter(_.username == lift(username))
+            .isEmpty
+        }
+        for {
+          b <- run(containsNotQuery()).implicitDS
+        } yield b
+
+      override def containsId(username: String) =
+        inline def containsQuery() = quote {
+          users
+            .filter(_.username == lift(username))
+            .nonEmpty
+        }
+        for {
+          b <- run(containsQuery()).implicitDS
+        } yield b
+
+      override def containsNotEmail(email: Email) =
+        inline def containsNotQuery() = quote {
+          users
+            .filter(_.email == lift(email))
+            .isEmpty
+        }
+        for {
+          b <- run(containsNotQuery()).implicitDS
+        } yield b
   }
 
   def insert(user: User): ZIO[Env, Throwable, Long] =
@@ -94,3 +130,12 @@ object UserRepository:
 
   def findByEmail(email: Email): ZIO[Env, Throwable, Option[User]] =
     ZIO.accessM(_.get.findByEmail(email))
+
+  def containsNot(username: String): ZIO[Env, Throwable, Boolean] =
+    ZIO.accessM(_.get.containsNot(username))
+
+  def containsNotEmail(email: Email): ZIO[Env, Throwable, Boolean] =
+    ZIO.accessM(_.get.containsNotEmail(email))
+
+  def containsId(username: String): ZIO[Env, Throwable, Boolean] = 
+    ZIO.accessM(_.get.containsId(username))

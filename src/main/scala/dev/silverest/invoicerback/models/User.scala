@@ -3,6 +3,7 @@ package dev.silverest.invoicerback.models
 import io.circe.Decoder
 import io.getquill.MappedEncoding
 import io.circe.Encoder
+import dev.silverest.invoicerback.daos.Unique
 
 case class User(
   username: String,
@@ -38,3 +39,8 @@ object Role:
 
   given quillRoleDecoder: MappedEncoding[String, Role] =
     MappedEncoding(Role.fromString(_).getOrElse(Role.User))
+
+object User:
+
+  given userUniqueId: Unique[User, String] with
+    def uniquesExtractor(u: User) = u.username

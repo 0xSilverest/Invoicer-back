@@ -3,6 +3,8 @@ package dev.silverest.invoicerback.handlers
 import dev.silverest.invoicerback.services.{Authenticator, LoginService}
 import dev.silverest.invoicerback.models.UserJwtDecode
 
+import utils._
+
 import pdi.jwt.JwtClaim
 
 import zhttp.http.*
@@ -34,7 +36,7 @@ class AuthenticationHandler:
             .map(decode[LoginRequest])
             .flatMap {
               case Right(creds) => loginService.login(creds.username, creds.password)
-              case Left(error) => ZIO.succeed(Response.fromHttpError(HttpError.UnprocessableEntity(s"$error")))
+              case Left(e) => ErrorHandler.unprocessableEntity(s"$e")
             }
         } yield response
     }

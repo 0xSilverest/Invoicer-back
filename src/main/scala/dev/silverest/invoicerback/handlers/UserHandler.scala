@@ -1,6 +1,6 @@
 package dev.silverest.invoicerback.handlers
 
-import dev.silverest.invoicerback.handlers.utils.HandlerUtils
+import dev.silverest.invoicerback.handlers.utils.*
 import dev.silverest.invoicerback.models.User
 import dev.silverest.invoicerback.models.UserJwtDecode
 import dev.silverest.invoicerback.repositories.UserRepository
@@ -13,12 +13,25 @@ import io.circe.generic.auto.*
 import pdi.jwt.JwtClaim
 
 class UserHandler:
-  val backendLayer: ZLayer[ZEnv, Nothing, UserRepository.Env] = UserRepository.live
+  private type RepEnv = UserRepository.Env
+  val backendLayer: ZLayer[ZEnv, Nothing, RepEnv] = UserRepository.live
 
   val publicEndpoints = Http.collectZIO[Request] {
-    case req@Method.POST -> _ / "signup" =>
-      HandlerUtils.successActionRequest(UserRepository.insert)(req)
-  }
+    case request @ Method.POST -> _ / "signup" =>
+      request.bodyAsString.map(decode[User])
+        .flatMap {
+          case Right(user) =>
+            UserRepository.containsNot(user.username)
+            .flatMap {
+              case true => UserRepository.containsNotEmail(user.email).flatMap {
+                case true => HandlerUtils.successActionHandler(UserRepository.insert)(user)
+                case false => ErrorHandler.conflict("Email already used!")
+              }
+              case false => ErrorHandler.conflict("Username is already used")
+            }
+          case Left(e) => ErrorHandler.unprocessableEntity(s"$e")
+        }
+    }
 
   // Will require authentication
   // and mostly will be used by the admin
