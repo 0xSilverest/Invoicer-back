@@ -2,7 +2,8 @@ package dev.silverest.invoicerback
 
 import zhttp.http.*
 import zhttp.service.Server
-import zio._
+import zio.*
+import zio.logging.*
 
 import scala.util.Try
 import zhttp.service.server.ServerChannelFactory
@@ -18,9 +19,14 @@ object Invoicerback extends zio.App:
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
     val nThreads: Int = args.headOption.flatMap(x => Try(x.toInt).toOption).getOrElse(0)
 
-    val env = ServerChannelFactory.auto ++
+    val env =
+      ServerChannelFactory.auto ++
       EventLoopGroup.auto(nThreads) ++
-      Router.backendLayers
+      Router.backendLayers ++
+      Logging.console(
+        logLevel = LogLevel.Info,
+        format = LogFormat.ColoredLogFormat()
+      )
 
     server
       .make

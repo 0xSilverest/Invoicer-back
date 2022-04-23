@@ -20,7 +20,7 @@ class LoginService:
     UserRepository.findByUsername(username)
       .map {
         case Some(user) =>
-          if user.password == password then
+          if user.validatePassword(password) then
             Response.json(s"${Token(authenticator.jwtEncode(user.username)).asJson}")
           else
             Response.fromHttpError(HttpError.BadRequest("Invalid password."))

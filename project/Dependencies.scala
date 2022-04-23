@@ -13,6 +13,7 @@ object Dependencies {
 
   val `zio-core`    = "dev.zio" %% "zio" % zioVersion
   val `zio-logging` = "dev.zio" %% "zio-logging" % zioLoggingVersion
+  val `zio-logging-slf4j` = "dev.zio" %% "zio-logging-slf4j" % zioLoggingVersion
 
   val `zio-http`      = "io.d11" %% "zhttp" % ZHTTPVersion
   val `zio-http-test` = "io.d11" %% "zhttp" % ZHTTPVersion % Test
@@ -24,14 +25,13 @@ object Dependencies {
   val `circe-generic` = "io.circe" %% "circe-generic" % circeVersion
   val `circe-parser`  = "io.circe" %% "circe-parser" % circeVersion
 
-  val `quill-jdbc-zio` = "io.getquill" %% "quill-jdbc-zio" % quillVersion
-  //val `mysql-driver`   = "mysql" % "mysql-connector-java" % mysqlVersion
+  val `quill-jdbc-zio`  = "io.getquill" %% "quill-jdbc-zio" % quillVersion
   val `postgres-driver` = "org.postgresql" % "postgresql" % postgresVersion
-  //val `h2-driver`      = "com.h2database" % "h2" % "2.1.210"
 
   val `tapir-core`     = "com.softwaremill.sttp.tapir" %% "tapir-core" % tapirVersion
   val `tapir-zio`      = "com.softwaremill.sttp.tapir" %% "tapir-zio1" % tapirVersion
   val `tapir-zio-http` = "com.softwaremill.sttp.tapir" %% "tapir-zio1-http-server" % tapirVersion
 
   val `jwt-core` = "com.github.jwt-scala" %% "jwt-core" % "9.0.5"
+  val `pbkdf2`   = "io.github.nremond" %% "pbkdf2-scala" % "0.6.9-SNAPSHOT"
 }

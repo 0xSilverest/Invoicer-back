@@ -1,5 +1,6 @@
 package dev.silverest.invoicerback.repositories
 
+import dev.silverest.invoicerback.models.HashedPassword
 import dev.silverest.invoicerback.models.User
 import dev.silverest.invoicerback.models.Email
 import dev.silverest.invoicerback.handlers.utils.ErrorHandler

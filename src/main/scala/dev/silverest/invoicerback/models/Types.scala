@@ -27,7 +27,8 @@ object Address:
 
 
 object ICENumber:
-  def empty: ICENumber = new ICENumber ("") {}
+  def empty: ICENumber =
+    new ICENumber ("") {}
 
   private inline def iceNumberRegex(iceNumber: String): Boolean =
     iceNumber matches "[0-9]{15}"
@@ -82,7 +83,8 @@ object PhoneNumber:
 
 
 object Email:
-  def empty: Email = new Email("") {}
+  def empty: Email =
+    new Email("") {}
 
   private inline def emailRegex(email: String): Boolean =
     email matches "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\\.[a-zA-Z0-9-.]+$)"

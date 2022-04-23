@@ -15,7 +15,6 @@ object Person:
   case class PersonWithoutId(firstName: String, lastName: String, address: Address,
               email: Email, phoneNumber: PhoneNumber, userId: String)
 
-
 object Company:
   def apply(id: Int, name: String, email: Email, phone: PhoneNumber,
             address: Address, iceNumber: ICENumber, userId: String): Client.Company =
