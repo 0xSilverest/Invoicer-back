@@ -21,10 +21,12 @@ object ProductRepository:
   trait Service:
     def insert(product: Product): Task[Long]
     def update(product: Product): Task[Long]
-    def delete(id: String, userId: String): Task[Long]
+    def delete(id: Long, userId: String): Task[Long]
     def byName(pattern: String): Task[List[Product]]
     def all(userId: String): Task[List[Product]]
-    def byId(id: String): Task[Option[Product]]
+    def byId(id: Long): Task[Option[Product]]
+    def containsNot(name: String, userId: String): Task[Boolean]
+    def contains(name: String, userId: String): Task[Boolean]
 
   type Env = Has[Service]
 
@@ -69,7 +71,7 @@ object ProductRepository:
           products <- run(byName).implicitDS
         } yield products
 
-      override def byId(id: String) =
+      override def byId(id: Long) =
         inline def byIdQuery = quote {
           products.filter(_.id == lift(id))
         }
@@ -77,7 +79,7 @@ object ProductRepository:
           products <- run(byIdQuery).implicitDS
         } yield products.headOption
 
-      override def delete(id: String, userId: String) =
+      override def delete(id: Long, userId: String) =
         inline def deleteQuery = quote {
           products
             .filter(p => p.id == lift(id) && p.userId == lift(userId))
@@ -86,6 +88,28 @@ object ProductRepository:
         for {
           id <- run(deleteQuery).implicitDS
         } yield id
+
+      override def containsNot(name: String, userId: String) =
+        inline def containsNotQuery = quote {
+          products
+            .filter(_.name == lift(name))
+            .filter(_.userId == lift(userId))
+            .isEmpty
+        }
+        for {
+          contains <- run(containsNotQuery).implicitDS
+        } yield contains
+
+      override def contains(name: String, userId: String) =
+        inline def containsQuery = quote {
+          products
+            .filter(_.name == lift(name))
+            .filter(_.userId == lift(userId))
+            .nonEmpty
+        }
+        for {
+          contains <- run(containsQuery).implicitDS
+        } yield contains
   }
 
   def insert(product: Product): ZIO[Env, Throwable, Long] =
@@ -94,15 +118,20 @@ object ProductRepository:
   def update(product: Product): ZIO[Env, Throwable, Long] =
     ZIO.accessM(_.get.update(product))
 
-  def delete(id: String, userId: String): ZIO[Env, Throwable, Long] =
+  def delete(id: Long, userId: String): ZIO[Env, Throwable, Long] =
     ZIO.accessM(_.get.delete(id, userId))
 
-  def findById(id: String, userId: String): ZIO[Env, Throwable, Option[Product]] =
+  def findById(id: Long, userId: String): ZIO[Env, Throwable, Option[Product]] =
     ZIO.accessM(_.get.byId(id))
 
-  def all(userId: String): ZIO[Env, Throwable, List[Product]] =
+  def getAll(userId: String): ZIO[Env, Throwable, List[Product]] =
     ZIO.accessM(_.get.all(userId))
 
   def hasNameContaining(userId: String, pattern: String): ZIO[Env, Throwable, List[Product]] =
-    all(userId).map(_.filter(_.name contains pattern))
+    getAll(userId).map(_.filter(_.name contains pattern))
 
+  def containsNot(name: String, userId: String): ZIO[Env, Throwable, Boolean] =
+    ZIO.accessM(_.get.containsNot(name, userId))
+
+  def contains(name: String, userId: String): ZIO[Env, Throwable, Boolean] =
+    ZIO.accessM(_.get.contains(name, userId))

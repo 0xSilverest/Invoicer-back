@@ -9,6 +9,7 @@ import dev.silverest.invoicerback.daos.Mapper
 
 import dev.silverest.invoicerback.repositories.PersonRepository
 import dev.silverest.invoicerback.handlers.utils.HandlerUtils
+
 import zhttp.http.*
 import zio.*
 import io.circe.*
@@ -51,7 +52,7 @@ class PersonHandler:
   private def deletePerson(userId: String, id: Int) =
       for {
         _ <- PersonRepository.delete(id, userId)
-      } yield Response.text(s"succesfully deleted")
+      } yield Response.ok
 
   private def nonExistenceChecker = 
     HandlerUtils.genericExistenceChecker[PersonDao, Client.Person, (String, String), RepEnv](

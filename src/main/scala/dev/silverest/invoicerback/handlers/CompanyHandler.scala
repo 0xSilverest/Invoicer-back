@@ -57,7 +57,7 @@ class CompanyHandler:
   def deleteCompany(userId: String, name: String) = 
     for {
       _ <- CompanyRepository.delete(userId)(name)
-    } yield Response.text("")
+    } yield Response.ok
 
   private def nonExistenceChecker = 
     HandlerUtils.genericExistenceChecker[CompanyDao, Client.Company, ICENumber, RepEnv](

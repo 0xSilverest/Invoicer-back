@@ -1,6 +1,6 @@
 package dev.silverest.invoicerback.models
 
-case class Product(id: String,
+case class Product(id: Long,
                    name: String,
                    description: String,
                    price: Double,
